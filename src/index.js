@@ -1,76 +1,74 @@
-import debounce from 'lodash.debounce';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import './css/styles.css';
-import fetchCountries from './fetchCountries.js';
+import debounce from 'lodash/debounce';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import { fetchCountries } from './js/fetchCountries';
 
-const refs = {
-  searchInput: document.querySelector('#search-box'),
-  countryList: document.querySelector('.country-list'),
-  countryInfo: document.querySelector('.country-info'),
-};
-
-const { searchInput, countryList, countryInfo } = refs;
 const DEBOUNCE_DELAY = 300;
 
-searchInput.addEventListener('input', debounce(handleSearch, DEBOUNCE_DELAY));
+const inputEl = document.getElementById('search-box');
+const listEl = document.querySelector('.country-list');
+const infoEl = document.querySelector('.country-info');
 
-function handleSearch(event) {
-  const searchKey = event.target.value.trim();
+const cleanMarkup = ref => (ref.innerHTML = '');
 
-  if (searchKey === '') {
-    clearCountryList();
-    clearCountryInfo();
-  } else {
-    fetchCountries(searchKey)
-      .then(data => {
-        if (data.length > 10) {
-          Notify.info(
-            'Too many matches found. Please enter a more specific name'
-          );
-          clearCountryList();
-          clearCountryInfo();
-        } else if (data.length >= 2 && data.length <= 10) {
-          clearCountryInfo();
-          countryList.innerHTML = countryListMurkup(data);
-        } else {
-          clearCountryList();
-          countryInfo.innerHTML = countryInfoMurkup(data);
-        }
-      })
-      .catch(error => {
-        console.log(error);
-        Notify.failure('Oops, there is no country with that name');
-      });
+const inputHandler = e => {
+  const textInput = e.target.value.trim();
+
+  if (!textInput) {
+    cleanMarkup(listEl);
+    cleanMarkup(infoEl);
+    return;
   }
-}
 
-function countryListMurkup(countryArray) {
-  return countryArray
-    .map(({ name, flags }) => {
-      return `<li class="country-list__item"><img src="${flags.svg}" alt="${name.common}" class="country-list_img"><span class="country-list__name">${name.common}</span></li>`;
+  fetchCountries(textInput)
+    .then(data => {
+      console.log(data);
+      if (data.length > 10) {
+        Notify.info(
+          'Too many matches found. Please enter a more specific name'
+        );
+        return;
+      }
+      renderMarkup(data);
     })
+    .catch(err => {
+      cleanMarkup(listEl);
+      cleanMarkup(infoEl);
+      Notify.failure('Oops, there is no country with that name');
+    });
+};
+
+const renderMarkup = data => {
+  if (data.length === 1) {
+    cleanMarkup(listEl);
+    const markupInfo = createInfoMarkup(data);
+    infoEl.innerHTML = markupInfo;
+  } else {
+    cleanMarkup(infoEl);
+    const markupList = createListMarkup(data);
+    listEl.innerHTML = markupList;
+  }
+};
+
+const createListMarkup = data => {
+  return data
+    .map(
+      ({ name, flags }) =>
+        `<li><img src="${flags.png}" alt="${name.official}" width="60" height="40">${name.official}</li>`
+    )
     .join('');
-}
+};
 
-function countryInfoMurkup(countryArray) {
-  return countryArray
-    .map(({ name, flags, capital, population, languages }) => {
-      return `<div class="country-info__name"><img src="${flags.svg}" alt="${
-        name.common
-      }" class="country-info__img" />${name.official}</div>
-        <p><span class="country-info__bold">Capital: </span>${capital}</p>
-        <p><span class="country-info__bold">Population: </span>${population}</p>
-        <p><span class="country-info__bold">Languages: </span>${Object.values(
-          languages
-        ).join(', ')}</p>`;
-    })
-    .join('');
-}
+const createInfoMarkup = data => {
+  return data.map(
+    ({ name, capital, population, flags, languages }) =>
+      `<h1><img src="${flags.png}" alt="${
+        name.official
+      }" width="40" height="40">${name.official}</h1>
+      <p>Capital: ${capital}</p>
+      <p>Population: ${population}</p>
+      <p>Languages: ${Object.values(languages)}</p>`
+  );
+};
 
-function clearCountryList() {
-  countryList.innerHTML = '';
-}
-
-function clearCountryInfo() {
-  countryInfo.innerHTML = '';
-}
+inputEl.addEventListener('input', debounce(inputHandler, DEBOUNCE_DELAY));
