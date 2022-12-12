@@ -1,3 +1,6 @@
+// Напиши функцію fetchCountries(name), яка робить HTTP - запит на ресурс name 
+// і повертає проміс з масивом країн - результатом запиту.
+
 export default function fetchCountries(name) {
   const BASE_URL = 'https://restcountries.com/v3.1/';
 

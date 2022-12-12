@@ -1,13 +1,15 @@
+// 1. Застосовуємо бібліотеки
 import './css/styles.css';
 import debounce from 'lodash/debounce';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { fetchCountries } from './js/fetchCountries';
 
-const DEBOUNCE_DELAY = 300;
+// 2.Знаходиом необхідні посилання 
 
-const inputEl = document.getElementById('search-box');
-const listEl = document.querySelector('.country-list');
-const infoEl = document.querySelector('.country-info');
+const DEBOUNCE_DELAY = 300;
+const searchBox = document.getElementById('search-box');
+const countryList = document.querySelector('.country-list');
+const countryInfo = document.querySelector('.country-info');
 
 const cleanMarkup = ref => (ref.innerHTML = '');
 
@@ -15,11 +17,14 @@ const inputHandler = e => {
   const textInput = e.target.value.trim();
 
   if (!textInput) {
-    cleanMarkup(listEl);
-    cleanMarkup(infoEl);
+    cleanMarkup(countryList);
+    cleanMarkup(countryInfo);
     return;
   }
 
+//  3. Функція обробки помилок
+
+  
   fetchCountries(textInput)
     .then(data => {
       console.log(data);
@@ -32,21 +37,22 @@ const inputHandler = e => {
       renderMarkup(data);
     })
     .catch(err => {
-      cleanMarkup(listEl);
-      cleanMarkup(infoEl);
+      cleanMarkup(countryList);
+      cleanMarkup(countryInfo);
       Notify.failure('Oops, there is no country with that name');
     });
 };
 
+// 4. Створення розмітки
 const renderMarkup = data => {
   if (data.length === 1) {
-    cleanMarkup(listEl);
+    cleanMarkup(countryList);
     const markupInfo = createInfoMarkup(data);
-    infoEl.innerHTML = markupInfo;
+    countryInfo.innerHTML = markupInfo;
   } else {
-    cleanMarkup(infoEl);
+    cleanMarkup(countryInfo);
     const markupList = createListMarkup(data);
-    listEl.innerHTML = markupList;
+    countryList.innerHTML = markupList;
   }
 };
 
@@ -58,7 +64,7 @@ const createListMarkup = data => {
     )
     .join('');
 };
-
+// 5. Функція для створення розмітки
 const createInfoMarkup = data => {
   return data.map(
     ({ name, capital, population, flags, languages }) =>
@@ -71,4 +77,4 @@ const createInfoMarkup = data => {
   );
 };
 
-inputEl.addEventListener('input', debounce(inputHandler, DEBOUNCE_DELAY));
+searchBox.addEventListener('input', debounce(inputHandler, DEBOUNCE_DELAY));
